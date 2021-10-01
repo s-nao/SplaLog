@@ -1,8 +1,9 @@
 import cv2
+import numpy as np
 
 # 動画を読込み
 # カメラ等でストリーム再生の場合は引数に0等のデバイスIDを記述する
-video = cv2.VideoCapture('../resource/video/test_data.mp4')
+video = cv2.VideoCapture('../resource/video/test_data.mov')
 
 icon_width = 48
 icon_height = 56
@@ -13,6 +14,19 @@ allies_positions = [
     {"x": 474, "y": 19},
     {"x": 531, "y": 19}
 ]
+
+enemy_positions = [
+    {"x": 700, "y": 19},
+    {"x": 755, "y": 19},
+    {"x": 814, "y": 19},
+    {"x": 871, "y": 19}
+]
+
+def is_death(img_th):
+    if (cv2.countNonZero(img_th)/ img_th.size  * 100) <= 30:
+        return "death"
+    else:
+        return "alive"
 
 while video.isOpened():
     # フレームを読込み
@@ -25,17 +39,58 @@ while video.isOpened():
     # -----------------
     # 画像処理を記述する
     # -----------------
-    deframe = []
+    allies_frames = []
 
+    enemy_frames = []
+    enemy_frames_hsv = []
+
+    # 味方のフレーム取得
     for position in allies_positions :
-        deframe.append(frame[position["y"]:position["y"]+icon_height, position["x"]:position["x"]+icon_height])
+        tmp_frame = frame[position["y"]:position["y"]+icon_height, position["x"]:position["x"]+icon_height]
+
+        hsv_image = cv2.cvtColor(tmp_frame, cv2.COLOR_BGR2HSV)
+
+        detect = cv2.inRange(hsv_image, np.array([0, 0, 0]), np.array([0, 0, 60]))
+
+        allies_frames.append(tmp_frame)
+
         cv2.rectangle(frame, (position["x"], position["y"]),
                       (position["x"]+icon_width, position["y"]+icon_height), (0, 0, 255), 1)
 
-    print(deframe)
+    for position in enemy_positions :
+            tmp_frame = frame[position["y"]:position["y"]+icon_height, position["x"]:position["x"]+icon_height]
+
+            hsv_image = cv2.cvtColor(tmp_frame, cv2.COLOR_BGR2GRAY)
+
+            enemy_frames.append(tmp_frame)
+            enemy_frames_hsv.append(hsv_image)
+
+            cv2.rectangle(frame, (position["x"], position["y"]),
+                          (position["x"]+icon_width, position["y"]+icon_height), (0, 0, 255), 1)
+
 
     # フレームの描画
-    cv2.imshow('frame', deframe[1])
+#     count = 0
+#     for (frame,frame_hsv) in zip(enemy_frames,enemy_frames_hsv):
+#         cv2.imshow('frame:{%d}' % count, frame)
+#         cv2.imshow('frame_hsv:{%d}' % count, frame_hsv)
+#         count+=1
+#
+#         ret1,img_th=cv2.threshold(frame_hsv,0,255,cv2.THRESH_OTSU)
+#         print((cv2.countNonZero(img_th)/ img_th.size  * 100))
+#
+#         break
+
+    cv2.imshow('frame', enemy_frames[1])
+    cv2.imshow('frame_hsv', enemy_frames_hsv[1])
+
+
+    ret1,img_th=cv2.threshold(enemy_frames_hsv[1],0,255,cv2.THRESH_OTSU)
+    print((cv2.countNonZero(img_th)/ img_th.size  * 100) )
+    print(is_death(img_th))
+
+
+    # cv2.imshow("frame", frame)
 
     # qキーの押下で処理を中止
     key = cv2.waitKey(1)
