@@ -23,3 +23,17 @@ ImportError: dlopen(/Users/****/.local/share/virtualenvs/SplaLog-LfVzFE6D/lib/py
 ```
 brew intall ffmpeg
 ```
+
+### obsで取得したキャプチャーを入力値にしたい
+
+1. obs-virtualcamをインストールする
+```
+brew install obs-virtualcam
+```
+
+2. コードないのvideo captureの項目を修正
+```
+例) 
+修正前：video = cv2.VideoCapture("ファイル名")
+修正後：video = cv2.VideoCapture(1) # 自分のPCはインカメがあるから1を指定する
+```
